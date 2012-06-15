@@ -17,7 +17,11 @@ register = template.Library()
 
 @register.inclusion_tag('current_challenges.html')
 def current_challenges(size=0):
-    problems = Problem.objects.filter(status=2)
+    if size == 0:
+        problems = Problem.objects.filter(status=2)
+    else:
+        problems = Problem.objects.filter(status__gte=2)
+
     context = {"problems": problems, "size": size}
     return context
 
