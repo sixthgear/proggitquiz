@@ -1,0 +1,8 @@
+Thank you for registering at proggitquiz! 
+Please activate your account by visiting: 
+http://{{ site }}{% url registration.views.activate activation_key %}.
+
+Good hunting!
+
+
+

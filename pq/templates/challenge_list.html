@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load challenges %}
+{% load markup %}
+{% load humanize %}
+
+{% block slug %}challenge{% endblock %}
+{% block title %}Challenge{% endblock %}
+{% block primary %}
+	
+{% current_challenges %}
+
+{% endblock %}

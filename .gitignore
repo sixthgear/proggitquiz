@@ -1,0 +1,10 @@
+*.log
+*.pot
+*.pyc
+*.sqlite
+local_settings.py
+assets/
+media/generators/
+media/output/
+media/source/
+media/validators/

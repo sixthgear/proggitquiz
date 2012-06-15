@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load challenges %}
+{% load markup %}
+{% load humanize %}
+
+{% block slug %}challenge{% endblock %}
+{% block title %}Challenge{% endblock %}
+{% block primary %}
+    
+<h2>{{ problem.title }} {% if problem.status == 1 %}(Draft){% endif %}</h2> 
+<p><span class="label label-info ">{% if problem.status < 3 %}Closes{% else %}Completed{% endif %} {{ problem.completed|naturalday }}</span> 
+    <span class="label ">{{ my_score }} / 200 points</span> </p>
+    
+<div id="preamble"> {{ problem.preamble|markdown }} </div>
+{{ problem.body|markdown }}
+    
+{% endblock %}
+
+{% block secondary %}
+
+{% if problem.status == 2 %}
+
+
+    {% for b in buttons %}
+
+    <div class="set">   
+    <h4>
+        <i class="{% if set.id > max_set %}icon-lock{% else %}icon-th-list{% endif %}"></i> 
+        {{ b.set.title }} set <small>({{ b.set.points }} points)</small>
+    </h4>
+    
+    <div class="btn-group">
+        <a class="btn btn-download {{ b.class.0 }} {% if b.disabled %}disabled{% endif %}"
+            href="{{ b.url }}"
+            {% if not b.url %}onclick="return false;"{% endif %}>
+            {{ b.action }}
+        </a>
+
+        <button class="btn btn-timer {{ b.class.1 }}" 
+            {% if b.disabled %}disabled="disabled"{% endif %}>
+            <i class="{{ b.icon }}"></i> <span>{{ b.time }}</span>
+        </button>
+    </div> 
+
+    {% if b.running %}
+    <form id="upload-form" 
+        enctype="multipart/form-data" method="post" 
+        action="{% url pq.views.solution_upload problem.id b.sol.id %}">
+        {% csrf_token %}
+
+        {% for e in messages %}
+        <div class="alert alert-error">
+        <strong>Error! </strong> {{ e }}
+        </div>
+        {% endfor %}
+        
+        <fieldset>
+            {% for field in s_form %}
+            <div class="control-group">
+                <label class="control-label" for="id_{{ field.html_name }}">
+                    <i class="icon-list icon-white"></i> 
+                    {{ field.label }}
+                </label>
+                <div class="controls">{{ field }}</div>
+            </div>
+            {% endfor %}
+
+            <input type="hidden" name="solution" value="{{ b.sol.id }}">
+
+            <button type="submit" class="btn">
+                <i class="icon-chevron-up"></i> Upload solution
+            </button>
+        </fieldset>
+    </form>    
+    {% endif %}
+     
+    </div>
+    {% endfor %}
+
+    {# $('#upload-form').insertAfter(this.parentNode).slideDown(); return false; #}
+    
+    {% for b in bonuses %}
+    <div class="set">
+    <h4>
+        <i class="{{ b.icon }}"></i> {{ b.title }} 
+        {% if b in buttons.1.sol.bonuses.all %}
+            <span class="label label-success">                
+                 <i class="icon-ok icon-white"></i> {{ b.points }} points 
+            </span> 
+        {% else %}
+            <small>({{ b.points }} points)</small>
+        {% endif %}
+    </h4>
+    <p>{{ b.description }}</p>
+    </div>
+    {% endfor %}
+
+    
+
+{% endif %} 
+
+<br>
+
+<h4><i class="icon-star"></i> Scoreboard</h4>
+<table cellspacing="0" cellpadding="0" class="solutions table-striped table-bordered table-condensed">
+    {% for s in scoreboard %}
+        <tr>            
+            <td width="224">
+                <a href="{% url pq.views.user_profile s.author__username %}">{{ s.author__username }}</a>
+            </td>                           
+            <td class="date" align="center">{{ s.score }}</td>
+        </tr>
+    {% empty %}
+        <tr><td>None yet!</td></tr>
+    {% endfor %}
+</table>
+
+{% if problem.status == 3 %}
+<h3 style="color: #999;">
+    This challenge is now closed.
+</h3>
+{% endif %} 
+
+<br>
+
+<h4><i class="icon-question-sign"></i> About The New Site Features</h4>
+
+        <p>Proggitquiz now features automatic verification of solutions, along with a simple scoring system for each challenge.</p>
+        <ol>
+            
+<li>Write your program according to the problem description</li>
+<li>Download the basic input set. a five minute timer will start.</li>
+<li>Feed the input file to your program and save the output.</li>
+<li>Upload the output file along with your soure code. If it is correct, you will receive points. If not you may try again.</li>
+<li>Repeat from step 2 for the Advanced Set and the Bonus Set (with modified rules).</li>
+</ol>
+
+<p><b>Note:</b> The input sets use unix line endings (\n) and the verifier expects them as well.</p>
+
+<p><b>Note:</b> There is not currently a way to retry a set once completed, but it will be added in the near future. This might be handy if you miss the runtime bonus points and would like to try again.</p>
+
+
+<h4><i class="icon-globe"></i> Come Chat!</h4>
+<p>Join channel <a href="irc://irc.freenode.net/##proggit">##proggit</a> on freenode.</p>
+
+<h4><i class="icon-wrench"></i> Bugs</h4>
+<p>Having issues with the the site? <a href="mailto:pq@sixthgear.ca">Let us know</a>.</p>
+
+{% endblock %}
+

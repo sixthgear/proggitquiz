@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load markup %}
+
+{% block slug %}challenge{% endblock %}
+{% block title %}Challenge{% endblock %}
+{% block primary %}
+	
+<h2><a href="{% url pq.views.challenge problem.id %}">{{ problem.title }}</a> &rarr; Submit an Entry</h2>	
+	
+<form method="post" action="">
+	{{ form.as_p }}
+	<input type="submit" value="Continue &rarr;">
+</form>
+
+{% endblock %}
+
+{% block secondary %}
+<h3>Some suggestions.</h3>	
+
+<p><strong>PLEASE</strong> include loads of comments in your submission. Tell us why you made certain key decisions, and explain how the tricky parts of your algorithms work. We'd love to hear as much as you're willing to tell us.</p>
+
+{% endblock %}

@@ -1,0 +1,23 @@
+{% load markup %}
+{% load humanize %}
+
+<table id="challenge-list" class="table-striped table-bordered challenge-list">
+{% for p in problems %}
+<tr>
+	<td>
+		<a href="{% url pq.views.challenge p.id %}">
+		<i class="icon-map-marker"></i> 
+		{{ p.title }}
+				
+		<span class="label pull-right">0 / 200 points</span> 
+		{% if size == 0 %}		
+		<span class="label label-info pull-right"> 
+			{% if p.status < 3 %}Closes{% else %}Completed{% endif %} {{ p.completed|naturalday }}
+		</span> 
+		{% endif %}
+		</a> 
+	</td>
+</tr>
+<tr><td colspan="2">{{ p.preamble|markdown }}</td></tr>	
+{% endfor %}
+</table>

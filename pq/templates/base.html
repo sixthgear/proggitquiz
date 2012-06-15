@@ -1,0 +1,110 @@
+{% load challenges %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+	<title>Proggitquiz: {% block title %}{% endblock %}</title>
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/select2-2.0/select2.min.js"></script>
+    <script type="text/javascript" src="/static/underscore-min.js"></script>
+    <script type="text/javascript" src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/bootstrap/js/bootstrap-datepicker.js"></script>
+    <script type="text/javascript" src="/static/pq.js"></script>    	
+
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/static/pq.css">
+    <link rel="stylesheet" type="text/css" href="/static/select2-2.0/select2.css">
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap/css/datepicker.css">
+
+</head>
+<body class="{% block slug %}{% endblock %}">
+
+    <div id="header" class="container">
+    <div class="row">
+
+        <div id="logo" class="span3">
+            <h1><a href="{% url pq.views.home %}">proggitquiz</a></h1>        
+        </div>
+
+        <div class="span5">
+        <ul id="navigation" class="nav nav-pills pull-right">
+            <li class="{% if slug == 'home' %}active{%endif%}">
+                <a href="{% url pq.views.home %}">Home</a>
+            </li>
+            <li class="{% if slug == 'challenges' %}active{%endif%}">
+                <a href="{% url pq.views.challenge_list %}">Challenges</a>
+            </li>
+            <li class="{% if slug == 'rules' %}active{%endif%}">
+                <a href="{% url pq.views.rules %}">Rules</a>
+            </li>
+            <li class="{% if slug == 'contribute' %}active{%endif%}">
+                <a href="{% url pq.views.contribute %}">Contribute</a>
+            </li>
+        </ul>
+        </div>
+
+        <div class="span4">
+        <ul id="account" class="nav nav-pills pull-right">
+            {% if user.is_authenticated %}
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+
+                    sup, <strong>{{ user.username }}</strong>? <b class="caret"></b>
+                </a>
+                
+                <ul class="dropdown-menu">
+                    <li id="nav_account">
+                        <a href="{% url pq.views.user_profile %}">
+                        <i class="icon-user"></i> Profile
+                    </a>
+                    <li id="nav_account">
+                        <a href="{% url django.contrib.auth.views.password_change %}">
+                        <i class="icon-cog"></i> Account
+                    </a>
+                    </li>
+                    <li id="nav_logout">
+                        <a href="{% url django.contrib.auth.views.logout %}">
+                        <i class="icon-chevron-down"></i> Logout
+                    </a>
+                    </li>   
+                </ul>
+            </li>
+            {% else %}
+            <li id="nav_login"><a href="{% url django.contrib.auth.views.login %}"><span>Login</span></a></li>
+            <li id="nav_register"><a href="{% url registration.views.register %}"><span>Register</span></a></li>   
+            {% endif %}
+        </ul>
+        </div>
+
+    </div>
+    </div>
+
+
+    <div id="content" class="container">
+    <div class="row">
+    <div class="span8">
+    {% block primary %}
+    {% endblock %}
+    </div>
+
+    <div class="span4">
+    {% block secondary %}
+        {% current_challenges size=1 %}
+
+        <br>
+
+        <h4><i class="icon-globe"></i> Come Chat!</h4>
+        <p>Join channel <a href="irc://irc.freenode.net/##proggit">##proggit</a> on freenode.</p>
+
+        <h4><i class="icon-wrench"></i> Bugs</h4>
+        <p>Having issues with the the site? <a href="">Let us know</a>.</p>
+
+    {% endblock %}
+    </div>
+    </div>
+    </div>
+
+</body>
+</html>

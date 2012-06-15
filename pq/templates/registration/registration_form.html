@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block slug %}register{% endblock %}
+{% block title %}Register{% endblock %}
+
+{% block primary %}
+
+<form class="form-horizontal" method="post">
+{% csrf_token %}
+
+{% if form.errors %}
+	{{form.errors}}
+{% endif %}
+
+<fieldset>
+    <legend>Register for an account</legend>
+    <div class="control-group">
+      	<label class="control-label" for="id_username">Username</label>
+      	<div class="controls">
+      			{{ form.username }}
+    	</div>
+    </div>
+
+    <div class="control-group">
+      	<label class="control-label" for="id_email">Email</label>
+      	<div class="controls">
+      			{{ form.email }}
+    	</div>
+    </div>
+
+	<div class="control-group">
+      	<label class="control-label" for="id_password1">Password</label>
+      	<div class="controls">
+      			{{ form.password1 }}
+    	</div>
+    </div>
+
+    <div class="control-group">
+      	<label class="control-label" for="id_password2">Password (again)</label>
+      	<div class="controls">
+      			{{ form.password2 }}
+    	</div>
+    </div>
+
+	<div class="form-actions">
+            <button type="submit" class="btn btn-primary">Register</button>
+            <!-- <button class="btn">Cancel</button> -->
+    </div>
+
+	<input type="hidden" name="next" value="{{ next }}" />    
+	
+</fieldset>
+</form>
+
+{% endblock %}

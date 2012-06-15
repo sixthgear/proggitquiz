@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block slug %}login{% endblock %}
+{% block title %}Login{% endblock %}
+
+{% block primary %}
+
+{% if form.errors %}
+<p>Your username and password didn't match. Please try again.</p>
+{% endif %}
+
+<form class="form-horizontal" method="post" action="{% url django.contrib.auth.views.login %}">
+{% csrf_token %}
+
+<fieldset>
+    <legend>Login to proggitquiz</legend>
+    <div class="control-group">
+      	<label class="control-label" for="id_username">Username</label>
+      	<div class="controls">
+      			{{ form.username }}
+    	</div>
+    </div>
+	<div class="control-group">
+      	<label class="control-label" for="id_password">Password</label>
+      	<div class="controls">
+      			{{ form.password }}
+    	</div>
+    </div>
+
+	<div class="form-actions">
+            <button type="submit" class="btn btn-primary">Login</button>
+            <!-- <button class="btn">Cancel</button> -->
+    </div>
+
+	<input type="hidden" name="next" value="{{ next }}" />    
+	
+</fieldset>
+</form>
+
+{% endblock %}
