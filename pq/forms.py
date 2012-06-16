@@ -36,7 +36,7 @@ class SolutionForm(forms.ModelForm):
             a = a.strip() if a else ''
             b = b.strip() if b else ''
             if a != b:                
-                # raise forms.ValidationError('Your output failed on line %d!' % (i+1))
-                raise forms.ValidationError('Your output was incorrect.')
+                raise forms.ValidationError('Your output failed on line %d!' % (i+1))
+                # raise forms.ValidationError('Your output was incorrect.')
 
         return cleaned_data
