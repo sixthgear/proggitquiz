@@ -14,7 +14,7 @@
 	<h2>{{ problem.title }}</h2>	
 
 	<ul>
-		<li><strong>{{ solution.set.title }} set solution</strong> <!-- ({{ solution.language }})  -->by {{ solution.author }}</li>
+		<li><strong>{{ solution.set.title }} set solution</strong> <!-- ({{ solution.language }}) -->by {{ solution.author }}</li>
 		<li>{{ solution.submitted|naturaltime }}</li>
 		<li><a href="{% url pq.views.solution_download problem.id solution.id  %}">Download</a> |
 		<a href="{% url pq.views.solution_raw problem.id solution.id  %}">Raw</a>
@@ -26,7 +26,7 @@
 
 	{# {% code %}{% autoescape off %}{{ solution.source }}{% endautoescape %}{% endcode %} #}
 	<div id="code">
-		<pre class="prettyprint">{{ solution.source.read }}</pre>
+		<pre class="prettyprint">{{ solution.source.read|escape }}</pre>
 	</div>
 	
 {% endblock %}
