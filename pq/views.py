@@ -191,7 +191,7 @@ def solution(request, problem, solution):
     """
     problem = get_object_or_404(Problem, id=problem)
     solution = get_object_or_404(Solution, id=solution, problem=problem)
-    solutions = problem.solution_set.order_by('id')
+    # solutions = problem.solution_set.order_by('id')
 
     context = {
         'slug': 'challenges',
