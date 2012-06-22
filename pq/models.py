@@ -39,9 +39,9 @@ def get_fn_output(instance, filename):
 
 def get_fn_source(instance, filename):
     fn, ext = os.path.splitext(filename)
-    return 'source/p%03d-%d-%s%s' % (
+    return 'source/p%03d-%s-%s%s' % (
         instance.problem.id, 
-        instance.author.id, 
+        instance.author.username, 
         instance.set.title.lower()[:3], 
         ext
     )

@@ -1,4 +1,4 @@
-{% extends "base_sidebar.html" %}
+{% extends "challenge.html" %}
 {% load markup %}
 {% load humanize %}
 {% load challenges %}
@@ -14,51 +14,20 @@
 	<h2>{{ problem.title }}</h2>	
 
 	<ul>
-		<li><strong>{{ solution.title }}</strong> ({{ solution.language }}) by {{ solution.author }}</li>
-		<li>{{ solution.submitted|naturalday }}</li>
-		<li><a href="{% url apps.challenges.views.solution_download problem.id solution.id  %}">Download</a> |
-		<a href="{% url apps.challenges.views.solution_raw problem.id solution.id  %}">Raw</a>
+		<li><strong>{{ solution.set.title }} set solution</strong> <!-- ({{ solution.language }})  -->by {{ solution.author }}</li>
+		<li>{{ solution.submitted|naturaltime }}</li>
+		<li><a href="{% url pq.views.solution_download problem.id solution.id  %}">Download</a> |
+		<a href="{% url pq.views.solution_raw problem.id solution.id  %}">Raw</a>
 		{% if user == solution.author %}			
-		| <a href="{% url apps.challenges.views.solution_delete problem.id solution.id  %}">Delete</a>
+		| <a href="{% url pq.views.solution_delete problem.id solution.id  %}">Delete</a>
 		{% endif %}
 		</li>
 	</ul>
 
 	{# {% code %}{% autoescape off %}{{ solution.source }}{% endautoescape %}{% endcode %} #}
-	<div id="code">{{ solution.source|code:solution.language.name }}</div>
+	<div id="code">
+		<pre class="prettyprint">{{ solution.source.read }}</pre>
+	</div>
 	
 {% endblock %}
 
-{% block secondary %}
-
-	<h3>Solutions</h3>
-	<table cellspacing="0" cellpadding="0" class="solutions">
-		{% for s in solutions %}		
-			<tr {% if s == solution %}class="selected"{% endif %}>
-				<td><a href="{% url apps.challenges.views.solution problem.id s.id%}">
-				{% if s.title %}{{ s.title }}{% else %}{{ s.author }}{% endif %}					
-				</a></td>
-				<td>{{ s.language }}</td>
-				<td class="date">{{ s.submitted }}</td>
-			</tr>
-		{% empty %}
-			<tr><td>None yet!</td></tr>
-		{% endfor %}
-	</table>	
-
-	{% if problem.status == 2 %}
-	<h3>
-		<a class="sub" href="{% url apps.challenges.views.challenge_submit problem.id %}">Submit a Solution!</a>
-	</h3>
-	{% endif %}	
-	{% if problem.status == 3 %}
-	<h3 style="color: #999;">
-		This challenge is now closed.
-	</h3>
-	{% endif %}
-	<p>
-		<strong>Come Chat:</strong> 
-		irc.freednode.net on channel <a href="irc://irc.freenode.net/##proggit">##proggit</a>.
-	</p>
-
-{% endblock %}

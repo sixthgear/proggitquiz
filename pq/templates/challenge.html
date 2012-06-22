@@ -18,11 +18,11 @@
 
 {% block secondary %}
 
-{% if problem.status == 2 %}
-
+{% if problem.status == 3 %}
+    <h3 style="color: #999;">This challenge is now closed.</h3>
+{% elif problem.status == 2 %}
 
     {% for b in buttons %}
-
     <div class="set">   
     <h4>
         <i class="{% if set.id > max_set %}icon-lock{% else %}icon-th-list{% endif %}"></i> 
@@ -72,12 +72,9 @@
             </button>
         </fieldset>
     </form>    
-    {% endif %}
-     
+    {% endif %}     
     </div>
     {% endfor %}
-
-    {# $('#upload-form').insertAfter(this.parentNode).slideDown(); return false; #}
     
     {% for b in bonuses %}
     <div class="set">
@@ -94,32 +91,41 @@
     <p>{{ b.description }}</p>
     </div>
     {% endfor %}
-
-    
-
 {% endif %} 
 
 <br>
 
 <h4><i class="icon-star"></i> Scoreboard</h4>
 <table cellspacing="0" cellpadding="0" class="solutions table-striped table-bordered table-condensed">
-    {% for s in scoreboard %}
+    {% for user in scoreboard %}
         <tr>            
             <td width="224">
-                <a href="{% url pq.views.user_profile s.author__username %}">{{ s.author__username }}</a>
-            </td>                           
-            <td class="date" align="center">{{ s.score }}</td>
+                <a href="{% url pq.views.user_profile user.username %}">{{ user.username }}</a>
+            </td>
+            
+            {% for s in user.solutions %}
+            <td>
+            <a href="{% url pq.views.solution problem.id s.id %}">
+            <span class="label label-success">
+                {{ s.set.title|lower|slice:":3"}}
+            </span>
+            </a>
+            </td>
+            {% endfor %}
+            
+            {% if not user.solutions.all.1 %}
+                <td><span class="label">adv<span></td>
+            {% endif %}
+            {% if not user.solutions.all.2 %}
+                <td><span class="label">bon<span></td>
+            {% endif %}
+
+            <th class="date" align="center">{{ user.score }}</td>
         </tr>
     {% empty %}
         <tr><td>None yet!</td></tr>
     {% endfor %}
 </table>
-
-{% if problem.status == 3 %}
-<h3 style="color: #999;">
-    This challenge is now closed.
-</h3>
-{% endif %} 
 
 <br>
 

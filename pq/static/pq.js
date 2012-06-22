@@ -58,4 +58,6 @@ $(document).ready(function(){
         timer_stack.push(t);
     });
 
+    prettyPrint();
+
 });
