@@ -5,7 +5,7 @@ class ProblemAdmin(admin.ModelAdmin):
     list_display = ['title','author','status','created','started','completed']
     
 class SolutionAdmin(admin.ModelAdmin):
-    list_display = ['problem','author','set','status','language','generated']
+    list_display = ['problem','author','set','attempt','status','generated']
 
 admin.site.register(Language)    
 admin.site.register(Bonus)

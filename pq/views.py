@@ -32,8 +32,8 @@ def challenge_list(request):
 def get_scoreboard(problem, solution):
     # calculate scoreboard    
     sb_users = User.objects.filter(solution__problem=problem, solution__status=2)
-    scoreboard = sb_users.annotate(score=Sum('solution__set__points'))
-    scoreboard_b = sb_users.annotate(score=Sum('solution__bonuses__points'))
+    scoreboard = sb_users.annotate(score=Sum('solution__set__points')).order_by('id')
+    scoreboard_b = sb_users.annotate(score=Sum('solution__bonuses__points')).order_by('id')
     for sa, sb in zip(scoreboard, scoreboard_b):
         if sb.score:
             sa.score += sb.score        
