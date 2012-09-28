@@ -2,8 +2,8 @@ var timer_stack = []
 
 function zeropad(number, width) {
     width -= number.toString().length;
-    if ( width > 0 )
-        return new Array( width + (/\./.test( number ) ? 2 : 1) ).join( '0' ) + number;  
+    if (width > 0)
+        return new Array( width + (/\./.test( number ) ? 2 : 1) ).join( '0' ) + number;
     return number + ""; // always return a string
 }
 
@@ -30,7 +30,8 @@ Timer.prototype.stop = function() {
 }
 
 Timer.prototype.display = function(ms) {
-    ms = Math.max(0, Math.min(300000, ms));
+    // ms = Math.max(0, Math.min(300000, ms));
+    ms = Math.max(0, ms);
     var min = Math.floor(ms / 1000 / 60);
     var sec = Math.floor(ms / 1000 % 60);
     $(this.element).html(min + ":" + zeropad(sec, 2));

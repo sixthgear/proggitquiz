@@ -1,6 +1,9 @@
 @import url(http://fonts.googleapis.com/css?family=Ubuntu);
 
-
+body {
+    font-size: 13px;
+    line-height: 18px;
+}
 /*#content p, #content li {
     font-family: Georgia, "Times New Roman", serif;
 }*/
@@ -9,9 +12,15 @@ h1, h2, h3, h4 {
     font-family: "Ubuntu", "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 
+h1 { font-size: 30px; line-height: 36px; }
+h2 { font-size: 18px; }
+h3 { font-size: 16px; }
+h4 { font-size: 14px; }
+
 .badge, .label {
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
     /*font-weight: normal;*/
+    font-size: 10px;
 }
 
 .container {
@@ -43,8 +52,12 @@ a {
 	padding-top: 84px;
 }
 
+.btn {
+    font-size: 13px !important;
+}
+
 .btn-download {
-    width: 199px;
+    width: 191px;
 }
 
 .btn-timer {

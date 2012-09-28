@@ -1,4 +1,5 @@
 import os
+import itertools
 from datetime import datetime, timedelta
 
 from django.contrib import messages
@@ -25,11 +26,11 @@ def challenge_list(request):
     List of all challenges.
     TODO: pagination
     """
-    problems = Problem.objects.filter(status__gte=2).order_by('started').reverse()
-    context = {'problems': problems, 'slug': 'challenges'}
+    
+    context = {'slug': 'challenges'}
     return render_to_response('challenge_list.html', context, RequestContext(request))
 
-def get_scoreboard(problem, solution):
+def get_scoreboard(problem, solution, username=None):
     # calculate scoreboard    
     sb_users = User.objects.filter(solution__problem=problem, solution__status=2)
     scoreboard = sb_users.annotate(score=Sum('solution__set__points')).order_by('id')
@@ -46,15 +47,11 @@ def challenge(request, problem=None):
     """
     View details of a single challenge.
     """
-    if request.user.is_superuser:
-        minimum_status = 1
-    else:
-        minimum_status = 2
-
-    problem = get_object_or_404(Problem, id=problem, status__gte=minimum_status)
-    sets = Set.objects.all()
-
+    min_status = 1 if request.user.is_superuser else 2
+    problem = get_object_or_404(Problem, id=problem, status__gte=min_status)
+    sets = problem.sets.all()
     buttons = []
+
     if request.user.is_authenticated():
         solutions = problem.solution_set.filter(author=request.user).order_by('set')
         max_set = solutions.filter(status=2).aggregate(Max('set'))['set__max'] or 0
@@ -62,18 +59,27 @@ def challenge(request, problem=None):
         solutions = []
         max_set = 0
 
-    for set,sol in map(None, sets, solutions):
+    for set in sets:
+        set.open = False
+    for set in sets:
+        set.open = True
+        if set.id > max_set:
+            break                    
+
+    for set, sol in itertools.izip_longest(sets, solutions):
         b = {'set': set, 'sol': sol, 'icon': 'icon-time'}
         if not request.user.is_authenticated():
             b.update({
                 'action': 'Login to participate', 
-                'time': '5:00', 
+                'time': set.get_time_limit(),
                 'disabled': True                
             })
-        elif not sol and set.id > max_set + 1:
+        elif not sol and not set.open:
+            # and set != sets[0]:
             b.update({
-                'action': 'Complete %s set to unlock' % sets[set.id-2], 
-                'time': '5:00', 
+                'action': 'Complete previous set to unlock',                
+                # 'action': 'Complete %s set to unlock' % sets[set.id-2].title, 
+                'time': set.get_time_limit(),
                 'disabled': True
             })
         elif sol and sol.status == 2:            
@@ -87,10 +93,10 @@ def challenge(request, problem=None):
                 'action': 'Retry %s set' % set.title.lower(), 
                 'class': ('btn-info btn-refresh', 'btn-inverse'),
                 'icon': 'icon-time icon-white',
-                'time': '0:00',
+                'time': set.get_time_limit(),
                 'url': reverse('pq.views.solution_begin', args=[problem.id, set.id]),
             })
-        elif sol:
+        elif sol and set.time_limit > 0:
             running_solution = sol
             b.update({
                 'action': '%s set in progress' % set.title,
@@ -100,31 +106,47 @@ def challenge(request, problem=None):
                 'running': True,
                 'url': reverse('pq.views.solution_begin', args=[problem.id, set.id])
             })
+        elif sol:
+            # running solution with no time limit
+            running_solution = sol
+            b.update({
+                'action': '%s set in progress' % set.title,
+                'class': ('btn-primary', 'btn-inverse'),
+                'icon': 'icon-time icon-white',
+                'time': '0:00',
+                'running': True,
+                'url': reverse('pq.views.solution_begin', args=[problem.id, set.id])
+            })            
         else:
             b.update({
                 'action': 'Download input', 
                 'class': ('btn-info btn-refresh', 'btn-inverse'),
                 'icon': 'icon-time icon-white',
-                'time': '5:00',
+                'time': set.get_time_limit(),
                 'url': reverse('pq.views.solution_begin', args=[problem.id, set.id])
             })
         buttons.append(b)
 
-
-    my_score = 0
-    #     if request.user == sa:
-    #             my_score = sa.score
+    scoreboard = get_scoreboard(problem, solution)
+    if request.user in scoreboard:
+        my_score = [x.score for x in scoreboard if x==request.user][0]
+    else:
+        my_score = 0
     
     context = {
         'slug': 'challenges',
         'problem': problem,
         'buttons': buttons,
         # 'solutions': problem.solution_set.filter(status=2),
-        'bonuses': Bonus.objects.all(),
+        'bonuses': problem.bonuses.all(),
         's_form': SolutionForm(),
-        'scoreboard': get_scoreboard(problem, solution), 
-        'my_score': my_score,        
+        'scoreboard': scoreboard,
+        'my_score': my_score,
     }
+
+    if not problem.source_req:
+        context['s_form'].fields.pop('source')
+
     return render_to_response('challenge.html', context, RequestContext(request))
 
 @login_required
@@ -133,19 +155,31 @@ def solution_begin(request, problem, set):
     Begin a solution
     """
     problem = get_object_or_404(Problem, id=problem)
-    solutions = Solution.objects.filter(problem=problem, set=set, author=request.user)
+    problem_sets = problem.sets.all()
+    n_completed = problem.solution_set.filter(author=request.user, status=2).count()
+    next_set = None
+    output = ''
+
+    if n_completed < problem_sets.count():
+        next_set = problem_sets[n_completed]
+    
+    if not next_set:
+        messages.add_message(request, messages.ERROR, 'You may not begin this challenge yet.')
+        return HttpResponseRedirect(reverse('pq.views.challenge', args=[problem.id]))
+
+    solutions = problem.solution_set.filter(author=request.user, set=set)
 
     if not solutions:
         solution = Solution()
         solution.author = request.user
         solution.problem = problem
-        solution.set_id = int(set)        
-        solution.generate() # generate new input
+        solution.set_id = int(set)       
+        output = solution.generate() # generate new input
         solution.save()
     else:
         solution = solutions[0]
         if solution.is_expired():            
-            solution.generate() # generate new input
+            output = solution.generate() # generate new input
             solution.save()            
         
     filename = 'pq-p%d-%s-%d.in' % (
@@ -154,7 +188,7 @@ def solution_begin(request, problem, set):
         solution.attempt
     )
 
-    response = HttpResponse(solution.input_gen, mimetype='text/plain')
+    response = HttpResponse(output, mimetype='text/plain')
     response['Content-Disposition'] = 'attachment; filename=%s' % filename
     return response
 
@@ -174,7 +208,8 @@ def solution_upload(request, problem, solution):
 
     if request.POST:
         form = SolutionForm(request.POST, request.FILES, instance=solution)
-        if form.is_valid():            
+        if form.is_valid():
+            # valid and complete!
             solution.status = 2
             solution.submitted = datetime.now()
             solution.apply_bonuses()
@@ -191,6 +226,9 @@ def solution(request, problem, solution):
     """
     problem = get_object_or_404(Problem, id=problem)
     solution = get_object_or_404(Solution, id=solution, problem=problem)
+
+    if not problem.source_req:
+        return HttpResponseRedirect(reverse('pq.views.challenge', args=[problem.id]))    
     # solutions = problem.solution_set.order_by('id')
 
     context = {

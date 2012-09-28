@@ -9,8 +9,8 @@
 		<i class="icon-map-marker"></i> 
 		{{ p.title }}
 				
-		<span class="label pull-right">0 / 200 points</span> 
-		{% if size == 0 %}		
+		<span class="label pull-right">{{ p.score }} / 200 {% if size == 0 %}points{% endif %}</span> 
+		{% if size == 0 %}
 		<span class="label label-info pull-right"> 
 			{% if p.status < 3 %}Closes{% else %}Completed{% endif %} {{ p.completed|naturalday }}
 		</span> 

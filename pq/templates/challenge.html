@@ -9,7 +9,10 @@
     
 <h2>{{ problem.title }} {% if problem.status == 1 %}(Draft){% endif %}</h2> 
 <p><span class="label label-info ">{% if problem.status < 3 %}Closes{% else %}Completed{% endif %} {{ problem.completed|naturalday }}</span> 
-    <span class="label ">{{ my_score }} / 200 points</span> </p>
+    {% if user.is_authenticated %}
+    <span class="label ">{{ my_score }} / 200 points</span> 
+    {% endif %}
+</p>
     
 <div id="preamble"> {{ problem.preamble|markdown }} </div>
 {{ problem.body|markdown }}
@@ -129,22 +132,23 @@
 
 <br>
 
-<h4><i class="icon-question-sign"></i> About The New Site Features</h4>
-
-        <p>Proggitquiz now features automatic verification of solutions, along with a simple scoring system for each challenge.</p>
-        <ol>
-            
+{% if problem.status == 2 %}
+<h4><i class="icon-question-sign"></i> What do?</h4>
+    
+<ol>            
 <li>Write your program according to the problem description</li>
-<li>Download the basic input set. A five minute timer will start.</li>
+<li>Download the basic input set. The timer will start.</li>
 <li>Feed the input file to your program and save the output.</li>
 <li>Upload the output file along with your source code. If it is correct, you will receive points. If not you may try again until the timer expires.</li>
 <li>If the timer expires. You may try again, but a new input file will be generated.</li>
-<li>Repeat from step 2 for the Advanced Set and the Bonus Set (with modified rules).</li>
+<li>Repeat fot each set.</li>
 </ol>
 
 <p><b>Note:</b> The input sets use unix line endings (\n) and the verifier expects them as well.</p>
 
-<p><b>Note:</b> There is not currently a way to retry a set once completed, but it will be added in the near future. This might be handy if you miss the runtime bonus points and would like to try again.</p>
+<br> 
+{% endif %}
+
 
 
 <h4><i class="icon-globe"></i> Come Chat!</h4>

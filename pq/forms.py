@@ -16,14 +16,20 @@ class SolutionForm(forms.ModelForm):
         output_gen = self.instance.output_gen
         output_user = cleaned_data.get('output_user')
         source = cleaned_data.get('source')
+        source_req = self.instance.problem.source_req
 
         if not output_user:
             raise forms.ValidationError('No output provided.')
 
-        if not source:
-            raise forms.ValidationError('No source code provided.')            
+        if source_req and not source:
+            raise forms.ValidationError('No source code provided.')
 
-        for f in [output_user, source]:
+        if source_req:
+            files = [output_user, source]
+        else:
+            files = [output_user]
+
+        for f in files:
             content_type = f.content_type.split('/')[0]
             if content_type in CONTENT_TYPES:
                 print f._size

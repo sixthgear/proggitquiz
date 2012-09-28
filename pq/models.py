@@ -20,8 +20,9 @@ SOL_STATUS_CHOICES = (
     (2, 'Complete'),
 )
 
-def get_fn_generator(instance, filename):
-    # slug = instance.title.lower().replace(' ','')
+GRACE_PERIOD = 5
+
+def get_fn_generator(instance, filename):    
     slug = re.sub(r'[\W_]+', '', instance.title.lower())[:50]
     return 'generators/%s-gen.py' % slug
 
@@ -57,8 +58,15 @@ class Language(models.Model):
 class Set(models.Model):
     title = models.CharField(max_length=100)
     points = models.IntegerField()
+    time_limit = models.IntegerField(help_text="Time limit in seconds.")
+
     def __unicode__(self):
-        return self.title
+        return '%s (%s)' % (self.title, self.get_time_limit())
+
+    def get_time_limit(self):
+        minute = int(self.time_limit / 60)
+        second = int(self.time_limit % 60)
+        return "%d:%02d" % (minute, second)
 
 class Problem(models.Model):
     title = models.CharField(max_length=100)
@@ -69,9 +77,14 @@ class Problem(models.Model):
     completed = models.DateTimeField(null=True, blank=True)
     preamble = models.TextField()
     body = models.TextField()
+    source_req = models.BooleanField('Source code required?')
+    use_input_validation = models.BooleanField('Input validates output?')
     generator = models.FileField(null=True, upload_to=get_fn_generator)
-    validator = models.FileField(null=True, upload_to=get_fn_validator)
+    validator = models.FileField(null=True, upload_to=get_fn_validator)    
     # spoilers = models.BooleanField()
+    sets = models.ManyToManyField('Set', blank=True)
+    bonuses = models.ManyToManyField('Bonus', blank=True)
+
     def __unicode__(self):
         return self.title
 
@@ -97,36 +110,49 @@ class Solution(models.Model):
         # generate input/output on creation
         self.attempt += 1
         self.generated = datetime.now()
-        self.input_gen = check_output(['python', self.problem.generator.path, '%d' % self.set.id])
+        output = check_output(['python', self.problem.generator.path, '%d' % self.set.id])
+        if self.problem.use_input_validation:
+            self.input_gen = output
+        else:
+            self.input_gen = str(self.set.id)
+
         p = Popen(['python', self.problem.validator.path], stdin=PIPE, stdout=PIPE)
         self.output_gen = p.communicate(self.input_gen)[0]
+        return output
 
     def is_expired(self):
+        if self.set.time_limit <= 0:
+            return False
         if not self.generated:
             return False
         else:
-            return timezone.now() > self.generated + timedelta(seconds=305)
+            return timezone.now() > self.generated + timedelta(seconds=self.set.time_limit+GRACE_PERIOD)
 
     def get_time_left(self):
-        s = 305 - (timezone.now() - self.generated).total_seconds()
+        s = self.set.time_limit + GRACE_PERIOD - (timezone.now() - self.generated).total_seconds()
         minute = int(s / 60)
         second = int(s % 60)
-        return "%d:%02d" % (minute, second)
+        return '%d:%02d' % (minute, second)
 
     def apply_bonuses(self):
-        
-        if self.has_runtime_bonus():
+        bonuses = self.problem.bonuses.all()
+        b_ids = [b.id for b in bonuses]
+        if 1 in b_ids and self.has_runtime_bonus():
             self.bonuses.add(Bonus.objects.get(id=1))
-
-        if self.has_earlybird_bonus():        
+        if 2 in b_ids and self.has_earlybird_bonus():
             self.bonuses.add(Bonus.objects.get(id=2))
+        if 3 in b_ids and self.has_first_post_bonus():
+            self.bonuses.add(Bonus.objects.get(id=3))
 
     def has_earlybird_bonus(self):        
-        return self.set.id == 2 and self.submitted and self.submitted < self.problem.started + timedelta(hours=12)
+        return self.set.id == 2 and self.submitted and self.submitted < self.problem.started + timedelta(hours=24)
 
     def has_runtime_bonus(self):
         return self.set.id == 2 and self.submitted and self.submitted < self.generated + timedelta(seconds=65)
 
+    def has_first_post_bonus(self):
+        n_solutions = self.problem.solution_set.filter(set_id=5).count()
+        return self.set.id == 5 and n_solutions == 1
         
 class Bonus(models.Model):
     title = models.CharField(max_length=100)
