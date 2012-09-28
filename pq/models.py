@@ -35,8 +35,7 @@ def get_fn_output(instance, filename):
     return 'output/p%03d-%d-%s.out' % (
         instance.problem.id, 
         instance.author.id, 
-        instance.set.title.lower()[:3]
-    )
+        instance.set.title.lower()[:3])
 
 def get_fn_source(instance, filename):
     fn, ext = os.path.splitext(filename)
@@ -44,8 +43,7 @@ def get_fn_source(instance, filename):
         instance.problem.id, 
         instance.author.username, 
         instance.set.title.lower()[:3], 
-        ext
-    )
+        ext)
 
 class Language(models.Model):
     name = models.CharField(max_length=100)
@@ -58,7 +56,7 @@ class Language(models.Model):
 class Set(models.Model):
     title = models.CharField(max_length=100)
     points = models.IntegerField()
-    time_limit = models.IntegerField(help_text="Time limit in seconds.")
+    time_limit = models.IntegerField(help_text='Time limit in seconds.')
 
     def __unicode__(self):
         return '%s (%s)' % (self.title, self.get_time_limit())

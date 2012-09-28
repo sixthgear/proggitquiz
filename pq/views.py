@@ -178,7 +178,7 @@ def solution_begin(request, problem, set):
         solution.save()
     else:
         solution = solutions[0]
-        if solution.is_expired():            
+        if solution.is_expired() or not problem.use_input_validation:
             output = solution.generate() # generate new input
             solution.save()            
         
