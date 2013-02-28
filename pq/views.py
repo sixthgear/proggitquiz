@@ -180,7 +180,9 @@ def solution_begin(request, problem, set):
         solution = solutions[0]
         if solution.is_expired() or not problem.use_input_validation:
             output = solution.generate() # generate new input
-            solution.save()            
+            solution.save()
+        else:
+            output = solution.input_gen
         
     filename = 'pq-p%d-%s-%d.in' % (
         problem.id,
