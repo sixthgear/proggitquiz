@@ -5,7 +5,7 @@
 {% block title %}Challenge{% endblock %}
 {% block primary %}
 	
-<h2><a href="{% url pq.views.challenge problem.id %}">{{ problem.title }}</a> &rarr; Submit an Entry</h2>	
+<h2><a href="{% url "pq.views.challenge" problem.id %}">{{ problem.title }}</a> &rarr; Submit an Entry</h2>	
 	
 <form method="post" action="">
 	{{ form.as_p }}

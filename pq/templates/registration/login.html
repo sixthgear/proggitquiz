@@ -8,7 +8,7 @@
 <p>Your username and password didn't match. Please try again.</p>
 {% endif %}
 
-<form class="form-horizontal" method="post" action="{% url django.contrib.auth.views.login %}">
+<form class="form-horizontal" method="post" action="{% url "django.contrib.auth.views.login" %}">
 {% csrf_token %}
 
 <fieldset>
