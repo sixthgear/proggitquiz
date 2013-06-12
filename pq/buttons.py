@@ -85,7 +85,7 @@ class OpenButton(Button):
     open set button          
     """
     def __init__(self, challenge, *args, **kwargs):
-        super(Open, self).__init__(challenge, *args, **kwargs)
+        super(OpenButton, self).__init__(challenge, *args, **kwargs)
         self.action = 'Download input'
         self.classes = ('btn-info btn-refresh', 'btn-inverse')
         self.icon = 'icon-time icon-white'
