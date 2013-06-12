@@ -28,19 +28,25 @@ def challenge_list(request):
     """
     List of all challenges.
     TODO: pagination
-    """
-    
+    """    
     context = {'slug': 'challenges'}
     return render_to_response('challenge_list.html', context, RequestContext(request))
 
 def get_scoreboard(challenge, solution, username=None):
-    # calculate scoreboard    
+    """
+    calculate scoreboard    
+    """
+    # retrieve all users who have a correct solution for this challenge
     sb_users = User.objects.filter(solution__challenge=challenge, solution__status=2)
+    # annotate one list with a sum of the set points
+    # and another with with a sumb of the bonus points
     scoreboard = sb_users.annotate(score=Sum('solution__set__points')).order_by('id')
     scoreboard_b = sb_users.annotate(score=Sum('solution__bonuses__points')).order_by('id')
     for sa, sb in zip(scoreboard, scoreboard_b):
-        if sb.score:
-            sa.score += sb.score        
+        # add them together
+        if sb.score:            
+            sa.score += sb.score
+        # retrieve a list of this users solutions to link to
         sa.solutions = sa.solution_set.filter(challenge=challenge, status=2)
 
     scoreboard = sorted(list(scoreboard), key=lambda x: x.score, reverse=True)
@@ -50,8 +56,12 @@ def challenge(request, challenge=None):
     """
     View details of a single challenge.
     """
+
+    # superusers are allowed to see drafts, other users are not.
     min_status = 1 if request.user.is_superuser else 2
     challenge = get_object_or_404(Challenge, id=challenge, status__gte=min_status)
+
+    # all sets that this challenge uses
     sets = challenge.sets.all()
     set_buttons = []
 
