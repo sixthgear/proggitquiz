@@ -14,13 +14,18 @@ PRB_STATUS_CHOICES = (
     (3, 'Archived'),    
 )
 
+CHALLENGE_TYPE_CHOICES = (
+    (0, 'Default'),
+    (1, 'Hex Grid'),     
+)
+
 SOL_STATUS_CHOICES = (
     (0, 'Incomplete'),
     (1, 'Expired'),
     (2, 'Complete'),
 )
 
-GRACE_PERIOD = 5
+GRACE_PERIOD = 5 # seconds
 
 def get_fn_generator(instance, filename):    
     slug = re.sub(r'[\W_]+', '', instance.title.lower())[:50]
@@ -45,28 +50,48 @@ def get_fn_source(instance, filename):
         instance.set.title.lower()[:3], 
         ext)
 
-
 class Challenge(models.Model):
+    """
+    A challenge is a single problem split into multiple sets. It may be part of a themed set of challenges.
+    """
+
+    # basic info
     title = models.CharField(max_length=100)
     author = models.ForeignKey(User)
     status = models.IntegerField(choices=PRB_STATUS_CHOICES)
+
+    # rules
+    type = models.IntegerField(choices=CHALLENGE_TYPE_CHOICES, default=0)
+    source_req = models.BooleanField('Source code required?')
+    use_input_validation = models.BooleanField('Input validates output?')
+    # spoilers = models.BooleanField()    
+
+    # descriptions
+    preamble = models.TextField()
+    body = models.TextField()
+
+    # scripts
+    generator = models.FileField(null=True, upload_to=get_fn_generator)
+    validator = models.FileField(null=True, upload_to=get_fn_validator)    
+    
+    # dates
     created = models.DateField(auto_now_add=True)
     started = models.DateTimeField(null=True, blank=True)
     completed = models.DateTimeField(null=True, blank=True)
-    preamble = models.TextField()
-    body = models.TextField()
-    source_req = models.BooleanField('Source code required?')
-    use_input_validation = models.BooleanField('Input validates output?')
-    generator = models.FileField(null=True, upload_to=get_fn_generator)
-    validator = models.FileField(null=True, upload_to=get_fn_validator)    
-    # spoilers = models.BooleanField()
+
+    # sets and bonuses
     sets = models.ManyToManyField('Set', blank=True)
     bonuses = models.ManyToManyField('Bonus', blank=True)
 
     def __unicode__(self):
         return self.title
 
+
 class Set(models.Model):
+    """
+    Sets are reusable problem difficulty classes.
+    """
+
     title = models.CharField(max_length=100)
     points = models.IntegerField()
     time_limit = models.IntegerField(help_text='Time limit in seconds.')
@@ -80,9 +105,14 @@ class Set(models.Model):
         return "%d:%02d" % (minute, second)        
 
 class Solution(models.Model):
+    """
+    A solution is a user attempt to solve a set.
+    """
+
     challenge = models.ForeignKey('Challenge')
-    author = models.ForeignKey(User)
+    author = models.ForeignKey(User)    
     set = models.ForeignKey(Set, default=0)
+
     status = models.IntegerField(choices=SOL_STATUS_CHOICES, default=0)
     attempt = models.IntegerField(default=0)
     generated = models.DateTimeField(blank=True, null=True)
@@ -101,12 +131,15 @@ class Solution(models.Model):
         # generate input/output on creation
         self.attempt += 1
         self.generated = datetime.now()
+
+        # run generator script
         output = check_output(['python', self.challenge.generator.path, '%d' % self.set.id])
         if self.challenge.use_input_validation:
             self.input_gen = output
         else:
             self.input_gen = str(self.set.id)
 
+        # run validator script
         p = Popen(['python', self.challenge.validator.path], stdin=PIPE, stdout=PIPE)
         self.output_gen = p.communicate(self.input_gen)[0]
         return output
@@ -152,6 +185,8 @@ class Bonus(models.Model):
     points = models.IntegerField(default=0)
     def __unicode__(self):
         return self.title
+    class Meta:
+        verbose_name_plural = 'bonuses'
 
 class Language(models.Model):
     name = models.CharField(max_length=100)

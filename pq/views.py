@@ -52,6 +52,8 @@ def challenge(request, challenge=None):
     sets = challenge.sets.all()
     buttons = []
 
+    # retrive a list of solutions for the challenge and user
+    # also, within those solutions, determine the id of the highest completed set
     if request.user.is_authenticated():
         solutions = challenge.solution_set.filter(author=request.user).order_by('set')
         max_set = solutions.filter(status=2).aggregate(Max('set'))['set__max'] or 0
@@ -59,6 +61,8 @@ def challenge(request, challenge=None):
         solutions = []
         max_set = 0
 
+    # append data to each set to determine if it should be open or closed based on the users
+    # completion progress
     for set in sets:
         set.open = False
     for set in sets:
@@ -66,28 +70,38 @@ def challenge(request, challenge=None):
         if set.id > max_set:
             break                    
 
+    # zipping sets and solutions together, generate a list of buttons to display along the right.
+    # there are different buttons for all sorts of state combinations
     for set, sol in itertools.izip_longest(sets, solutions):
+
+        # common button data
         b = {'set': set, 'sol': sol, 'icon': 'icon-time'}
+
+        # not-logged-in button
         if not request.user.is_authenticated():
             b.update({
                 'action': 'Login to participate', 
                 'time': set.get_time_limit(),
                 'disabled': True                
             })
-        elif not sol and not set.open:
-            # and set != sets[0]:
+
+        # locked set button
+        elif not sol and not set.open:            
             b.update({
-                'action': 'Complete previous set to unlock',                
-                # 'action': 'Complete %s set to unlock' % sets[set.id-2].title, 
+                'action': 'Complete previous set to unlock',
                 'time': set.get_time_limit(),
                 'disabled': True
             })
+
+        # completed set button
         elif sol and sol.status == 2:            
             b.update({
                 'action': 'Completed!',
                 'class': ('btn-success', 'btn-success'),
                 'icon': 'icon-ok icon-white'
             })
+
+        # expired set button
         elif sol and sol.is_expired():
             b.update({
                 'action': 'Retry %s set' % set.title.lower(), 
@@ -96,6 +110,8 @@ def challenge(request, challenge=None):
                 'time': set.get_time_limit(),
                 'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id]),
             })
+
+        # in-progress set button
         elif sol and set.time_limit > 0:
             running_solution = sol
             b.update({
@@ -106,8 +122,9 @@ def challenge(request, challenge=None):
                 'running': True,
                 'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id])
             })
-        elif sol:
-            # running solution with no time limit
+
+        # in-progress set with no time limit button
+        elif sol:            
             running_solution = sol
             b.update({
                 'action': '%s set in progress' % set.title,
@@ -116,7 +133,9 @@ def challenge(request, challenge=None):
                 'time': '0:00',
                 'running': True,
                 'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id])
-            })            
+            })  
+
+        # open set button          
         else:
             b.update({
                 'action': 'Download input', 
@@ -127,6 +146,8 @@ def challenge(request, challenge=None):
             })
         buttons.append(b)
 
+    # get scoreboard for this challenge
+    # additionally find MY score and store it specially
     scoreboard = get_scoreboard(challenge, solution)
     if request.user in scoreboard:
         my_score = [x.score for x in scoreboard if x==request.user][0]
@@ -144,6 +165,7 @@ def challenge(request, challenge=None):
         'my_score': my_score,
     }
 
+    # remove source field from form if not required for this challenge
     if not challenge.source_req:
         context['s_form'].fields.pop('source')
 

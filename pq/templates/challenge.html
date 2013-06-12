@@ -52,9 +52,7 @@
         {% csrf_token %}
 
         {% for e in messages %}
-        <div class="alert alert-error">
-        <strong>Error! </strong> {{ e }}
-        </div>
+        <div class="alert alert-error"><strong>Error! </strong> {{ e }}</div>
         {% endfor %}
         
         <fieldset>
