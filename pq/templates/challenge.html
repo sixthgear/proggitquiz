@@ -33,13 +33,13 @@
     </h4>
     
     <div class="btn-group">
-        <a class="btn btn-download {{ b.class.0 }} {% if b.disabled %}disabled{% endif %}"
+        <a class="btn btn-download {{ b.classes.0 }} {% if b.disabled %}disabled{% endif %}"
             href="{{ b.url }}"
             {% if not b.url %}onclick="return false;"{% endif %}>
             {{ b.action }}
         </a>
 
-        <button class="btn btn-timer {{ b.class.1 }}" 
+        <button class="btn btn-timer {{ b.classes.1 }}" 
             {% if b.disabled %}disabled="disabled"{% endif %}>
             <i class="{{ b.icon }}"></i> <span>{{ b.time }}</span>
         </button>

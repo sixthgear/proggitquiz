@@ -14,8 +14,8 @@
 	<ul>
 		<li><strong>{{ solution.set.title }} set solution</strong> <!-- ({{ solution.language }}) -->by {{ solution.author }}</li>
 		<li>{{ solution.submitted|naturaltime }}</li>
-		<li><a href="{% url "pq.views.solution_download" problem.id solution.id  %}">Download</a> |
-		<a href="{% url "pq.views.solution_raw" problem.id solution.id  %}">Raw</a>
+		<li><a href="{% url "pq.views.solution_download" challenge.id solution.id  %}">Download</a> |
+		<a href="{% url "pq.views.solution_raw" challenge.id solution.id  %}">Raw</a>
 		<!-- {% if user == solution.author %}
 		| <a href="{# url pq.views.solution_delete problem.id solution.id  #}">Delete</a>
 		{% endif %} -->

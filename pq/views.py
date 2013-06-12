@@ -13,6 +13,9 @@ from django.template import RequestContext
 from django.utils import timezone
 from pq.models import Challenge, Solution, Bonus, Set
 from pq.forms import SolutionForm        
+from pq import buttons
+
+
 
 def home(request):
     """
@@ -50,7 +53,7 @@ def challenge(request, challenge=None):
     min_status = 1 if request.user.is_superuser else 2
     challenge = get_object_or_404(Challenge, id=challenge, status__gte=min_status)
     sets = challenge.sets.all()
-    buttons = []
+    set_buttons = []
 
     # retrive a list of solutions for the challenge and user
     # also, within those solutions, determine the id of the highest completed set
@@ -73,78 +76,30 @@ def challenge(request, challenge=None):
     # zipping sets and solutions together, generate a list of buttons to display along the right.
     # there are different buttons for all sorts of state combinations
     for set, sol in itertools.izip_longest(sets, solutions):
-
-        # common button data
-        b = {'set': set, 'sol': sol, 'icon': 'icon-time'}
-
-        # not-logged-in button
+        
         if not request.user.is_authenticated():
-            b.update({
-                'action': 'Login to participate', 
-                'time': set.get_time_limit(),
-                'disabled': True                
-            })
-
-        # locked set button
+            b = buttons.LoginButton(challenge, set, sol)
+        
         elif not sol and not set.open:            
-            b.update({
-                'action': 'Complete previous set to unlock',
-                'time': set.get_time_limit(),
-                'disabled': True
-            })
-
-        # completed set button
+            b = buttons.LockedButton(challenge, set, sol)
+        
         elif sol and sol.status == 2:            
-            b.update({
-                'action': 'Completed!',
-                'class': ('btn-success', 'btn-success'),
-                'icon': 'icon-ok icon-white'
-            })
+            b = buttons.CompletedButton(challenge, set, sol)
 
-        # expired set button
         elif sol and sol.is_expired():
-            b.update({
-                'action': 'Retry %s set' % set.title.lower(), 
-                'class': ('btn-info btn-refresh', 'btn-inverse'),
-                'icon': 'icon-time icon-white',
-                'time': set.get_time_limit(),
-                'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id]),
-            })
+            b = buttons.ExpiredButton(challenge, set, sol)
 
-        # in-progress set button
         elif sol and set.time_limit > 0:
-            running_solution = sol
-            b.update({
-                'action': '%s set in progress' % set.title,
-                'class': ('btn-primary', 'btn-inverse timer-running'),
-                'icon': 'icon-time icon-white',
-                'time': sol.get_time_left(),
-                'running': True,
-                'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id])
-            })
+            b = buttons.RuninngButton(challenge, set, sol)
 
-        # in-progress set with no time limit button
         elif sol:            
-            running_solution = sol
-            b.update({
-                'action': '%s set in progress' % set.title,
-                'class': ('btn-primary', 'btn-inverse'),
-                'icon': 'icon-time icon-white',
-                'time': '0:00',
-                'running': True,
-                'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id])
-            })  
-
-        # open set button          
+            b = buttons.RunningUnlimitedButton(challenge, set, sol)            
+    
         else:
-            b.update({
-                'action': 'Download input', 
-                'class': ('btn-info btn-refresh', 'btn-inverse'),
-                'icon': 'icon-time icon-white',
-                'time': set.get_time_limit(),
-                'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id])
-            })
-        buttons.append(b)
+            b = buttons.OpenButton(challenge, set, sol)            
+
+        set_buttons.append(b)
+        
 
     # get scoreboard for this challenge
     # additionally find MY score and store it specially
@@ -157,8 +112,7 @@ def challenge(request, challenge=None):
     context = {
         'slug': 'challenges',
         'challenge': challenge,
-        'buttons': buttons,
-        # 'solutions': challenge.solution_set.filter(status=2),
+        'buttons': set_buttons,        
         'bonuses': challenge.bonuses.all(),
         's_form': SolutionForm(),
         'scoreboard': scoreboard,
