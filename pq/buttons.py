@@ -7,7 +7,7 @@ class Button(object):
         self.icon = 'icon-time'
         self.action = '',
         self.classes = ('', '')
-        self.time = '0:00'
+        self.time = ''
         self.running = False
         self.disabled = False
         self.url = ''
