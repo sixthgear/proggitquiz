@@ -47,7 +47,7 @@ def get_scoreboard(challenge, solution, username=None):
         if sb.score:            
             sa.score += sb.score
         # retrieve a list of this users solutions to link to
-        sa.solutions = sa.solution_set.filter(challenge=challenge, status=2)
+        sa.solutions = sa.solution_set.filter(challenge=challenge, status=2).order_by('id')
 
     scoreboard = sorted(list(scoreboard), key=lambda x: x.score, reverse=True)
     return scoreboard
