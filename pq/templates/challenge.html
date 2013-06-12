@@ -7,23 +7,23 @@
 {% block title %}Challenge{% endblock %}
 {% block primary %}
     
-<h2>{{ problem.title }} {% if problem.status == 1 %}(Draft){% endif %}</h2> 
-<p><span class="label label-info ">{% if problem.status < 3 %}Closes{% else %}Completed{% endif %} {{ problem.completed|naturalday }}</span> 
+<h2>{{ challenge.title }} {% if challenge.status == 1 %}(Draft){% endif %}</h2> 
+<p><span class="label label-info ">{% if challenge.status < 3 %}Closes{% else %}Completed{% endif %} {{ challenge.completed|naturalday }}</span> 
     {% if user.is_authenticated %}
     <span class="label ">{{ my_score }} / 200 points</span> 
     {% endif %}
 </p>
     
-<div id="preamble"> {{ problem.preamble|markdown }} </div>
-{{ problem.body|markdown }}
+<div id="preamble"> {{ challenge.preamble|markdown }} </div>
+{{ challenge.body|markdown }}
     
 {% endblock %}
 
 {% block secondary %}
 
-{% if problem.status == 3 %}
+{% if challenge.status == 3 %}
     <h3 style="color: #999;">This challenge is now closed.</h3>
-{% elif problem.status == 2 %}
+{% elif challenge.status == 2 %}
 
     {% for b in buttons %}
     <div class="set">   
@@ -48,7 +48,7 @@
     {% if b.running %}
     <form id="upload-form" 
         enctype="multipart/form-data" method="post" 
-        action="{% url "pq.views.solution_upload" problem.id b.sol.id %}">
+        action="{% url "pq.views.solution_upload" challenge.id b.sol.id %}">
         {% csrf_token %}
 
         {% for e in messages %}
@@ -108,7 +108,7 @@
             
             {% for s in user.solutions %}
             <td>
-            <a href="{% url "pq.views.solution" problem.id s.id %}">
+            <a href="{% url "pq.views.solution" challenge.id s.id %}">
             <span class="label label-success">
                 {{ s.set.title|lower|slice:":3"}}
             </span>
@@ -132,7 +132,7 @@
 
 <br>
 
-{% if problem.status == 2 %}
+{% if challenge.status == 2 %}
 <h4><i class="icon-question-sign"></i> What do?</h4>
     
 <ol>            

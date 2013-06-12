@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.utils import timezone
-from pq.models import Problem, Solution, Bonus, Set
+from pq.models import Challenge, Solution, Bonus, Set
 from pq.forms import SolutionForm        
 
 def home(request):
@@ -30,30 +30,30 @@ def challenge_list(request):
     context = {'slug': 'challenges'}
     return render_to_response('challenge_list.html', context, RequestContext(request))
 
-def get_scoreboard(problem, solution, username=None):
+def get_scoreboard(challenge, solution, username=None):
     # calculate scoreboard    
-    sb_users = User.objects.filter(solution__problem=problem, solution__status=2)
+    sb_users = User.objects.filter(solution__challenge=challenge, solution__status=2)
     scoreboard = sb_users.annotate(score=Sum('solution__set__points')).order_by('id')
     scoreboard_b = sb_users.annotate(score=Sum('solution__bonuses__points')).order_by('id')
     for sa, sb in zip(scoreboard, scoreboard_b):
         if sb.score:
             sa.score += sb.score        
-        sa.solutions = sa.solution_set.filter(problem=problem, status=2)
+        sa.solutions = sa.solution_set.filter(challenge=challenge, status=2)
 
     scoreboard = sorted(list(scoreboard), key=lambda x: x.score, reverse=True)
     return scoreboard
 
-def challenge(request, problem=None):    
+def challenge(request, challenge=None):    
     """
     View details of a single challenge.
     """
     min_status = 1 if request.user.is_superuser else 2
-    problem = get_object_or_404(Problem, id=problem, status__gte=min_status)
-    sets = problem.sets.all()
+    challenge = get_object_or_404(Challenge, id=challenge, status__gte=min_status)
+    sets = challenge.sets.all()
     buttons = []
 
     if request.user.is_authenticated():
-        solutions = problem.solution_set.filter(author=request.user).order_by('set')
+        solutions = challenge.solution_set.filter(author=request.user).order_by('set')
         max_set = solutions.filter(status=2).aggregate(Max('set'))['set__max'] or 0
     else:
         solutions = []
@@ -94,7 +94,7 @@ def challenge(request, problem=None):
                 'class': ('btn-info btn-refresh', 'btn-inverse'),
                 'icon': 'icon-time icon-white',
                 'time': set.get_time_limit(),
-                'url': reverse('pq.views.solution_begin', args=[problem.id, set.id]),
+                'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id]),
             })
         elif sol and set.time_limit > 0:
             running_solution = sol
@@ -104,7 +104,7 @@ def challenge(request, problem=None):
                 'icon': 'icon-time icon-white',
                 'time': sol.get_time_left(),
                 'running': True,
-                'url': reverse('pq.views.solution_begin', args=[problem.id, set.id])
+                'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id])
             })
         elif sol:
             # running solution with no time limit
@@ -115,7 +115,7 @@ def challenge(request, problem=None):
                 'icon': 'icon-time icon-white',
                 'time': '0:00',
                 'running': True,
-                'url': reverse('pq.views.solution_begin', args=[problem.id, set.id])
+                'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id])
             })            
         else:
             b.update({
@@ -123,11 +123,11 @@ def challenge(request, problem=None):
                 'class': ('btn-info btn-refresh', 'btn-inverse'),
                 'icon': 'icon-time icon-white',
                 'time': set.get_time_limit(),
-                'url': reverse('pq.views.solution_begin', args=[problem.id, set.id])
+                'url': reverse('pq.views.solution_begin', args=[challenge.id, set.id])
             })
         buttons.append(b)
 
-    scoreboard = get_scoreboard(problem, solution)
+    scoreboard = get_scoreboard(challenge, solution)
     if request.user in scoreboard:
         my_score = [x.score for x in scoreboard if x==request.user][0]
     else:
@@ -135,57 +135,57 @@ def challenge(request, problem=None):
     
     context = {
         'slug': 'challenges',
-        'problem': problem,
+        'challenge': challenge,
         'buttons': buttons,
-        # 'solutions': problem.solution_set.filter(status=2),
-        'bonuses': problem.bonuses.all(),
+        # 'solutions': challenge.solution_set.filter(status=2),
+        'bonuses': challenge.bonuses.all(),
         's_form': SolutionForm(),
         'scoreboard': scoreboard,
         'my_score': my_score,
     }
 
-    if not problem.source_req:
+    if not challenge.source_req:
         context['s_form'].fields.pop('source')
 
     return render_to_response('challenge.html', context, RequestContext(request))
 
 @login_required
-def solution_begin(request, problem, set):
+def solution_begin(request, challenge, set):
     """
     Begin a solution
     """
-    problem = get_object_or_404(Problem, id=problem)
-    problem_sets = problem.sets.all()
-    n_completed = problem.solution_set.filter(author=request.user, status=2).count()
+    challenge = get_object_or_404(Challenge, id=challenge)
+    challenge_sets = challenge.sets.all()
+    n_completed = challenge.solution_set.filter(author=request.user, status=2).count()
     next_set = None
     output = ''
 
-    if n_completed < problem_sets.count():
-        next_set = problem_sets[n_completed]
+    if n_completed < challenge_sets.count():
+        next_set = challenge_sets[n_completed]
     
     if not next_set:
         messages.add_message(request, messages.ERROR, 'You may not begin this challenge yet.')
-        return HttpResponseRedirect(reverse('pq.views.challenge', args=[problem.id]))
+        return HttpResponseRedirect(reverse('pq.views.challenge', args=[challenge.id]))
 
-    solutions = problem.solution_set.filter(author=request.user, set=set)
+    solutions = challenge.solution_set.filter(author=request.user, set=set)
 
     if not solutions:
         solution = Solution()
         solution.author = request.user
-        solution.problem = problem
+        solution.challenge = challenge
         solution.set_id = int(set)       
         output = solution.generate() # generate new input
         solution.save()
     else:
         solution = solutions[0]
-        if solution.is_expired() or not problem.use_input_validation:
+        if solution.is_expired() or not challenge.use_input_validation:
             output = solution.generate() # generate new input
             solution.save()
         else:
             output = solution.input_gen
         
     filename = 'pq-p%d-%s-%d.in' % (
-        problem.id,
+        challenge.id,
         solution.set.title.lower(),
         solution.attempt
     )
@@ -195,18 +195,19 @@ def solution_begin(request, problem, set):
     return response
 
 @login_required
-def solution_upload(request, problem, solution):
+def solution_upload(request, challenge, solution):
     """
     Upload and verify a solution
     """
-    problem = get_object_or_404(Problem, id=problem)
+    # TODO: clobbering the variable with one of a different type is probably not the best
+    challenge = get_object_or_404(Challenge, id=challenge)
     solution = get_object_or_404(Solution, id=solution)
     
-    if problem.status != 2:
+    if challenge.status != 2:
         return HttpResponseRedirect(reverse('pq.views.challenge_list'))
 
     if solution.is_expired():
-        return HttpResponseRedirect(reverse('pq.views.challenge', args=[problem.id]))
+        return HttpResponseRedirect(reverse('pq.views.challenge', args=[challenge.id]))
 
     if request.POST:
         form = SolutionForm(request.POST, request.FILES, instance=solution)
@@ -220,61 +221,61 @@ def solution_upload(request, problem, solution):
             for e in form.non_field_errors():
                 messages.add_message(request, messages.ERROR, e)
             
-    return HttpResponseRedirect(reverse('pq.views.challenge', args=[problem.id]))
+    return HttpResponseRedirect(reverse('pq.views.challenge', args=[challenge.id]))
     
-def solution(request, problem, solution):
+def solution(request, challenge, solution):
     """
     View details of a single solution.
     """
-    problem = get_object_or_404(Problem, id=problem)
-    solution = get_object_or_404(Solution, id=solution, problem=problem)
+    challenge = get_object_or_404(Challenge, id=challenge)
+    solution = get_object_or_404(Solution, id=solution, challenge=challenge)
 
-    if not problem.source_req:
-        return HttpResponseRedirect(reverse('pq.views.challenge', args=[problem.id]))    
-    # solutions = problem.solution_set.order_by('id')
+    if not challenge.source_req:
+        return HttpResponseRedirect(reverse('pq.views.challenge', args=[challenge.id]))    
+    # solutions = challenge.solution_set.order_by('id')
 
     context = {
         'slug': 'challenges',
-        'problem': problem,
+        'challenge': challenge,
         'solution': solution,
         # 'buttons': buttons,
-        # 'solutions': problem.solution_set.filter(status=2),
+        # 'solutions': challenge.solution_set.filter(status=2),
         # 'bonuses': Bonus.objects.all(),
         # 's_form': SolutionForm(),
-        'scoreboard': get_scoreboard(problem, solution), 
+        'scoreboard': get_scoreboard(challenge, solution), 
         # 'my_score': my_score,        
     }
 
     return render_to_response('solution.html', context, RequestContext(request))
     
-def solution_raw(request, problem, solution):
+def solution_raw(request, challenge, solution):
     """
     View details of a single solution.
     """
-    problem = get_object_or_404(Problem, id=problem)
-    solution = get_object_or_404(Solution, id=solution, problem=problem)
+    challenge = get_object_or_404(Challenge, id=challenge)
+    solution = get_object_or_404(Solution, id=solution, challenge=challenge)
     response = HttpResponse(solution.source, mimetype='text/plain')
     return response
 
-def solution_download(request, problem, solution):
+def solution_download(request, challenge, solution):
     """
     View details of a single solution.
     """    
-    problem = get_object_or_404(Problem, id=problem)
-    solution = get_object_or_404(Solution, id=solution, problem=problem)    
+    challenge = get_object_or_404(Challenge, id=challenge)
+    solution = get_object_or_404(Solution, id=solution, challenge=challenge)    
     response = HttpResponse(solution.source, mimetype='text/plain')
     response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(solution.source.name)
     return response
     
-def solution_delete(request, problem, solution):
-    problem = get_object_or_404(Problem, id=problem)
-    solution = get_object_or_404(Solution, id=solution, problem=problem)
+def solution_delete(request, challenge, solution):
+    challenge = get_object_or_404(Challenge, id=challenge)
+    solution = get_object_or_404(Solution, id=solution, challenge=challenge)
     if request.user != solution.author:
         messages.add_message(request, messages.INFO, 'Hey, you\'re not allowed to delete that.')
-        return HttpResponseRedirect(reverse('apps.challenges.views.solution', args=[problem.id, solution.id]))
+        return HttpResponseRedirect(reverse('apps.challenges.views.solution', args=[challenge.id, solution.id]))
     solution.delete()
     messages.add_message(request, messages.INFO, 'Deleted.')
-    return HttpResponseRedirect(reverse('apps.challenges.views.challenge', args=[problem.id]))
+    return HttpResponseRedirect(reverse('apps.challenges.views.challenge', args=[challenge.id]))
 
 def rules(request):
     """

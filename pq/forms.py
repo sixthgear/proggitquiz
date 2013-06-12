@@ -1,5 +1,5 @@
 from django import forms
-from pq.models import Problem, Solution, Bonus, Set
+from pq.models import Challenge, Solution, Bonus, Set
 from django.template.defaultfilters import filesizeformat
 from django.utils.translation import ugettext_lazy as _
 
@@ -16,7 +16,7 @@ class SolutionForm(forms.ModelForm):
         output_gen = self.instance.output_gen
         output_user = cleaned_data.get('output_user')
         source = cleaned_data.get('source')
-        source_req = self.instance.problem.source_req
+        source_req = self.instance.challenge.source_req
 
         if not output_user:
             raise forms.ValidationError('No output provided.')

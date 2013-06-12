@@ -10,7 +10,7 @@ from django import template
 from django.template.defaultfilters import stringfilter
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
-from pq.models import Problem
+from pq.models import Challenge
 from itertools import chain
 
 register = template.Library()
@@ -21,12 +21,12 @@ def current_challenges(context, size=0):
     scoreboard = {}
 
     if size == 0:
-        problems = Problem.objects.filter(status__gte=2).order_by('-started')
+        challenges = Challenge.objects.filter(status__gte=2).order_by('-started')
     else:
-        problems = Problem.objects.filter(status=2).order_by('-started')
+        challenges = Challenge.objects.filter(status=2).order_by('-started')
 
     if request.user.is_authenticated():        
-        scores = problems.filter(solution__author=request.user, solution__status=2)
+        scores = challenges.filter(solution__author=request.user, solution__status=2)
         scores_a = scores.annotate(score=Sum('solution__set__points')).order_by('id')
         scores_b = scores.annotate(score=Sum('solution__bonuses__points')).order_by('id')
         
@@ -35,10 +35,10 @@ def current_challenges(context, size=0):
             if sb.score:
                 scoreboard[sa.id] += sb.score                
     
-    for p in problems:
-            p.score = scoreboard.get(p.id, 0)
+    for c in challenges:
+            c.score = scoreboard.get(c.id, 0)
 
-    return {"problems": problems, "size": size}
+    return {"challenges": challenges, "size": size}
 
 @register.simple_tag
 def get(value, arg, offset):

@@ -2,22 +2,22 @@
 {% load humanize %}
 
 <table id="challenge-list" class="table-striped table-bordered challenge-list">
-{% for p in problems %}
+{% for c in challenges %}
 <tr>
 	<td>
-		<a href="{% url "pq.views.challenge" p.id %}">
+		<a href="{% url "pq.views.challenge" c.id %}">
 		<i class="icon-map-marker"></i> 
-		{{ p.title }}
+		{{ c.title }}
 				
-		<span class="label pull-right label-score">{{ p.score }} / 200 {% if size == 0 %}points{% endif %}</span> 
+		<span class="label pull-right label-score">{{ c.score }} / 200 {% if size == 0 %}points{% endif %}</span> 
 		{% if size == 0 %}
 		<span class="label label-info pull-right"> 
-			{% if p.status < 3 %}Closes{% else %}Completed{% endif %} {{ p.completed|naturalday }}
+			{% if c.status < 3 %}Closes{% else %}Completed{% endif %} {{ c.completed|naturalday }}
 		</span> 
 		{% endif %}
 		</a> 
 	</td>
 </tr>
-<tr><td colspan="2">{{ p.preamble|markdown }}</td></tr>	
+<tr><td colspan="2">{{ c.preamble|markdown }}</td></tr>	
 {% endfor %}
 </table>
