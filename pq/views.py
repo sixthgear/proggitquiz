@@ -100,7 +100,7 @@ def challenge(request, challenge=None):
             b = buttons.ExpiredButton(challenge, set, sol)
 
         elif sol and set.time_limit > 0:
-            b = buttons.RuninngButton(challenge, set, sol)
+            b = buttons.RunningButton(challenge, set, sol)
 
         elif sol:            
             b = buttons.RunningUnlimitedButton(challenge, set, sol)            
