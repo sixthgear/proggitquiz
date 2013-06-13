@@ -22,7 +22,7 @@
 
 
 """ Here's how you add a custom app for your local stuff:"""
-#INSTALLED_APPS = INSTALLED_APPS + (
+#EXTRA_INSTALLED_APPS = (
 #    'django_extensions',
 #)
 

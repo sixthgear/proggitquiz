@@ -165,7 +165,11 @@ LOGIN_REDIRECT_URL  = '/'
 REGISTRATION_OPEN = True
 ACCOUNT_ACTIVATION_DAYS = 7
 
+EXTRA_INSTALLED_APPS = None
 try:
     from local_settings import *
 except ImportError:
     pass
+else:
+    if EXTRA_INSTALLED_APPS:
+        INSTALLED_APPS = INSTALLED_APPS + EXTRA_INSTALLED_APPS
