@@ -1,6 +1,8 @@
 Proggitquiz
 -----------
 
+Visit http://proggitquiz.com to see the site in action!
+
 ## Installation instructions
 
 1. Install [Python](http://www.python.org/getit/)
